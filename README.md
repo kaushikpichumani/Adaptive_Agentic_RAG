@@ -1,63 +1,63 @@
-# Corrective RAG (CRAG) using LangChain & LangGraph
+# Adaptive RAG using LangChain & LangGraph
 
-This repository implements a **Corrective Retrieval-Augmented Generation (Corrective RAG / CRAG)** system using **LangChain** and **LangGraph**.
+This repository implements an **Adaptive Retrieval-Augmented Generation (Adaptive RAG)** system using **LangChain** and **LangGraph**.
 
-Unlike standard RAG pipelines that assume retrieval is always sufficient, this implementation introduces a **self-correcting mechanism** that:
-- Evaluates retrieved documents
-- Detects low-quality or insufficient context
-- Rewrites the query
-- Falls back to web search when needed
-- Generates a grounded final answer
+Unlike static or even corrective RAG pipelines, **Adaptive RAG dynamically adapts its retrieval and generation strategy at runtime** based on:
+- Document usefulness
+- Answer quality
+- Query supportability
+- Availability of internal vs external knowledge
 
-The workflow is explicitly modeled as a **stateful LangGraph**, making the correction logic transparent, debuggable, and extensible.
+The workflow is modeled as a **stateful decision graph**, enabling conditional routing, retries, and fallback strategies.
 
 ---
 
-## 🧠 Why Corrective RAG?
+## 🧠 What is Adaptive RAG?
 
-Traditional RAG pipelines:
-
+Traditional RAG:
 > Retrieve → Generate → Answer
 
-fail when:
-- Retrieval returns irrelevant documents
-- Queries are poorly phrased
-- Knowledge is missing from the vector store
+Corrective RAG:
+> Retrieve → Evaluate → Fix → Generate
 
-**Corrective RAG fixes this** by introducing an evaluation and correction loop:
+**Adaptive RAG goes further** by:
+- Evaluating document relevance
+- Adapting the query if documents are weak
+- Falling back to web search when needed
+- Validating generated answers
+- Deciding when to stop, retry, or reject unsupported queries
 
-> Retrieve → Grade → Correct → Retry → Generate
-
-This results in **more reliable and accurate answers**.
+This makes the system **robust, self-adjusting, and production-ready**.
 
 ---
 
 ## 🏗️ Architecture Overview
 
-The system follows the graph below:
+<p align="center">
+  <img src="assets/adaptive_rag.png" width="650"/>
+</p>
 
+---
 
-::contentReference[oaicite:0]{index=0}
-
-
-### Execution Flow
+## 🔄 Execution Flow (High Level)
 
 ```text
 __start__
-   ↓
- retrieve
-   ↓
- grade_documents
-   ├── (sufficient) ───────────────▶ generate ─▶ __end__
-   └── (insufficient)
-           ↓
-     transform_query
-           ↓
-     web_search_node
-           ↓
-        generate ─▶ __end__
-
-
-
-![Corrective RAG Workflow](/Users/kalyanpichumani/Desktop/Code experiments/Langgraph/correctiveRag.png)
-
+   │
+   ├──► retrieve (vectorstore)
+   │       │
+   │       ▼
+   │   grade_documents
+   │       ├── useful ─────────────► generate ──► __end__
+   │       └── not useful
+   │               ▼
+   │        transform_query
+   │               │
+   │               └──► retrieve (retry)
+   │
+   └──► web_search
+               │
+               ▼
+            generate
+               ├── useful ─────────► __end__
+               └── not supported ──► stop
