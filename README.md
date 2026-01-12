@@ -33,9 +33,10 @@ This makes the system **robust, self-adjusting, and production-ready**.
 
 ## 🏗️ Architecture Overview
 
-<p align="center">
-  <img src="assets/adaptive_rag.png" width="650"/>
-</p>
+## 🏗️ Architecture Overview
+
+![Adaptive RAG Architecture](assets/adaptive%20rag.png)
+
 
 ---
 
